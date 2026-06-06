@@ -239,9 +239,46 @@
   }
   footer b{color:var(--gold);font-style:normal;font-weight:500;letter-spacing:.04em}
 
+  /* ---- botones flotantes (actualizar / subir) ---- */
+  .fab{position:fixed;right:16px;bottom:16px;z-index:40;display:flex;flex-direction:column;gap:10px}
+  .fab button{
+    width:50px;height:50px;border-radius:50%;border:1px solid var(--line);
+    background:rgba(20,16,12,.85);backdrop-filter:blur(5px);color:var(--gold-bright);
+    font-size:20px;cursor:pointer;box-shadow:0 8px 22px -8px #000;transition:all .2s;
+    display:flex;align-items:center;justify-content:center;line-height:1;
+  }
+  .fab button:hover{background:rgba(201,168,106,.16);transform:translateY(-2px);color:var(--ink)}
+  .fab button:active{transform:scale(.93)}
+  .fab .spin{animation:spin .8s linear infinite;display:inline-block}
+
+  /* ---- botón de descarga por pieza ---- */
+  .dl-btn{
+    position:absolute;top:12px;right:12px;z-index:5;
+    width:40px;height:40px;border-radius:50%;border:1px solid var(--line);
+    background:rgba(16,13,11,.82);backdrop-filter:blur(3px);color:var(--gold-bright);
+    font-size:17px;cursor:pointer;opacity:0;transition:all .2s;
+    display:flex;align-items:center;justify-content:center;line-height:1;
+  }
+  .frame:hover .dl-btn{opacity:1}
+  .dl-btn:hover{background:rgba(201,168,106,.22);color:var(--ink)}
+
   @media(max-width:720px){
-    .lb-inner{grid-template-columns:1fr;gap:24px}
-    .gallery{gap:50px 28px}
+    .stage{padding:0 14px 96px}
+    header.hero{padding:46px 0 28px}
+    .hero h1{font-size:clamp(36px,11vw,62px)}
+    .hero .sub{font-size:15px}
+    .collection-line{font-size:11px}
+    .lb-inner{grid-template-columns:1fr;gap:22px}
+    .lightbox{padding:22px 14px}
+    .lb-info h2{font-size:27px}
+    .gallery{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:44px 18px}
+    .lb-close{top:14px;right:16px}
+    .dl-btn{opacity:1}            /* en mobile no hay hover: siempre visible */
+    .fab button{width:46px;height:46px;font-size:19px}
+  }
+  @media(max-width:430px){
+    .stage{padding:0 10px 88px}
+    .gallery{grid-template-columns:1fr;gap:40px}
   }
 </style>
 </head>
@@ -280,6 +317,12 @@
   <footer>
     Galería personal · arte servido directo desde <b>IPFS</b>
   </footer>
+</div>
+
+<!-- botones flotantes -->
+<div class="fab">
+  <button id="fabRefresh" title="Actualizar (buscar NFTs nuevos)" aria-label="Actualizar">⟳</button>
+  <button id="fabTop" title="Volver arriba" aria-label="Volver arriba">↑</button>
 </div>
 
 <!-- lightbox -->
@@ -386,6 +429,7 @@ function renderPiece(idx, id, meta, owner){
   div.innerHTML=
     '<div class="frame">'+
       '<div class="canvas-wrap">'+
+        '<button class="dl-btn" title="Descargar imagen" aria-label="Descargar">⬇</button>'+
         (imgUrl? '<img alt="" loading="lazy" src="'+imgUrl+'">' : '<div class="ph">imagen en IPFS…</div>')+
       '</div>'+
     '</div>'+
@@ -404,6 +448,8 @@ function renderPiece(idx, id, meta, owner){
       else { imgEl.replaceWith(Object.assign(document.createElement("div"),{className:"ph",textContent:"imagen no disponible"})); }
     };
   }
+  var dlBtn=div.querySelector(".dl-btn");
+  if(dlBtn){ dlBtn.addEventListener("click", function(ev){ ev.stopPropagation(); downloadImage(imgEl?imgEl.src:imgUrl, "arte_nft_"+num+".png"); }); }
   div.querySelector(".frame").addEventListener("click", function(){ openLightbox(num, id, meta, owner, imgEl?imgEl.src:imgUrl); });
   $("gallery").appendChild(div);
 }
@@ -427,6 +473,7 @@ function openLightbox(num, id, meta, owner, imgSrc){
   function addLink(label,href){ if(!href) return; var a=document.createElement("a"); a.href=href; a.target="_blank"; a.rel="noopener"; a.textContent=label; links.appendChild(a); }
   addLink("Ver en Etherscan ↗", CONFIG.explorer+"/nft/"+CONFIG.contract+"/"+id);
   if(imgSrc) addLink("Ver imagen en IPFS ↗", imgSrc);
+  if(imgSrc){ var dl=document.createElement("a"); dl.href="#"; dl.textContent="⬇ Descargar imagen"; dl.addEventListener("click", function(ev){ ev.preventDefault(); downloadImage(imgSrc, "arte_nft_"+num+".png"); }); links.appendChild(dl); }
   if(owner) addLink("Propietario: "+shortAddr(owner)+" ↗", CONFIG.explorer+"/address/"+owner);
   $("lightbox").classList.add("open");
   $("lbClose").style.display="block";
@@ -436,6 +483,22 @@ function closeLightbox(){ $("lightbox").classList.remove("open"); $("lbClose").s
 $("lbClose").addEventListener("click", closeLightbox);
 $("lightbox").addEventListener("click", function(e){ if(e.target===this) closeLightbox(); });
 document.addEventListener("keydown", function(e){ if(e.key==="Escape") closeLightbox(); });
+
+/* ---- descarga de imagen (bytes EXACTOS de IPFS; sin canvas -> mensaje oculto intacto) ---- */
+async function downloadImage(url, filename){
+  if(!url) return;
+  try{
+    var r=await fetch(url,{cache:"no-store"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    var blob=await r.blob();
+    var u=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=u; a.download=filename||"nft.png";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ document.body.removeChild(a); URL.revokeObjectURL(u); }catch(_){ } }, 1500);
+  }catch(e){
+    window.open(url,"_blank"); // fallback si el gateway bloquea CORS
+  }
+}
 
 /* ---- carga principal: barre la colección en orden ---- */
 async function loadGallery(){
@@ -482,6 +545,13 @@ $("cfgGo").addEventListener("click", function(){
   var gw=$("cfgGateway").value.trim(); if(gw){ if(!gw.endsWith("/")) gw+="/"; CONFIG.gateways=[gw].concat(CONFIG.gateways.filter(function(g){return g!==gw;})); }
   loadGallery();
 });
+
+/* ---- botones flotantes ---- */
+$("fabRefresh").addEventListener("click", function(){
+  var ico=this; ico.innerHTML='<span class="spin">⟳</span>';
+  Promise.resolve(loadGallery()).then(function(){ ico.textContent="⟳"; }).catch(function(){ ico.textContent="⟳"; });
+});
+$("fabTop").addEventListener("click", function(){ window.scrollTo({ top:0, behavior:"smooth" }); });
 
 loadGallery();
 </script>
