@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CipherVault · Galería</title>
+<meta name="description" content="Galería de arte cifrado — cada pieza guarda un mensaje invisible, legible sólo con la clave.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Spectral:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wall-0:#100d0b;
+    --wall-1:#171310;
+    --wall-2:#1e1813;
+    --ink:#ece4d8;
+    --ink-soft:#b8ad9c;
+    --ink-faint:#7d7466;
+    --gold:#c9a86a;
+    --gold-bright:#e6c98a;
+    --brass:#9c834f;
+    --line:rgba(201,168,106,.22);
+    --frame-1:#3a2f1f;
+    --frame-2:#caa86a;
+    --frame-3:#6e5a36;
+    --shadow:rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Spectral',Georgia,serif;
+    background:var(--wall-1);
+    color:var(--ink);
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* atmósfera: foco de sala + viñeta + grano */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(201,168,106,.10), transparent 55%),
+      radial-gradient(140% 120% at 50% 50%, transparent 40%, rgba(0,0,0,.55) 100%),
+      linear-gradient(180deg, var(--wall-2), var(--wall-0));
+  }
+  body::after{
+    content:"";position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .stage{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:0 28px 120px}
+
+  /* ---------- cabecera ---------- */
+  header.hero{
+    text-align:center;padding:84px 0 46px;position:relative;
+  }
+  .eyebrow{
+    font-family:'Spectral';font-style:italic;color:var(--gold);
+    letter-spacing:.04em;font-size:15px;opacity:.9;margin-bottom:18px;
+  }
+  .hero h1{
+    font-family:'Fraunces';font-weight:400;font-optical-sizing:auto;
+    font-size:clamp(46px,8vw,96px);line-height:.96;letter-spacing:-.015em;
+    color:var(--ink);
+  }
+  .hero h1 em{font-style:italic;color:var(--gold-bright);font-weight:300}
+  .hero .sub{
+    margin:24px auto 0;max-width:620px;color:var(--ink-soft);
+    font-size:17px;line-height:1.6;font-weight:300;
+  }
+  .rule{
+    width:64px;height:1px;margin:34px auto 0;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  }
+  .collection-line{
+    margin-top:20px;font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--ink-faint);font-family:'Spectral';
+  }
+  .collection-line b{color:var(--gold);font-weight:500}
+
+  /* ---------- barra de config (discreta) ---------- */
+  .config{
+    max-width:760px;margin:30px auto 0;border:1px solid var(--line);
+    border-radius:14px;background:rgba(20,16,12,.6);backdrop-filter:blur(4px);
+    overflow:hidden;
+  }
+  .config summary{
+    cursor:pointer;list-style:none;padding:13px 20px;font-size:12px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);
+    display:flex;align-items:center;gap:10px;user-select:none;
+  }
+  .config summary::-webkit-details-marker{display:none}
+  .config summary::before{content:"⚙";color:var(--gold);font-size:14px}
+  .config[open] summary{border-bottom:1px solid var(--line);color:var(--ink-soft)}
+  .config .body{padding:18px 20px 22px;display:grid;gap:14px}
+  .field{display:grid;gap:6px}
+  .field label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+  .field input{
+    width:100%;padding:10px 13px;border-radius:9px;border:1px solid var(--line);
+    background:#0d0a08;color:var(--ink);font-family:'Spectral';font-size:14px;
+  }
+  .field input:focus{outline:none;border-color:var(--gold)}
+  .config-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .config-row .field{flex:1;min-width:130px}
+  .btn{
+    border:1px solid var(--gold);background:transparent;color:var(--gold-bright);
+    padding:11px 22px;border-radius:9px;cursor:pointer;font-family:'Spectral';
+    font-size:13.5px;letter-spacing:.08em;transition:all .2s;white-space:nowrap;
+  }
+  .btn:hover{background:rgba(201,168,106,.12);color:var(--ink)}
+
+  /* ---------- estado ---------- */
+  .status{
+    text-align:center;margin:54px auto;color:var(--ink-soft);font-style:italic;
+    font-size:16px;min-height:24px;
+  }
+  .status .spinner{
+    display:inline-block;width:14px;height:14px;margin-right:9px;vertical-align:-2px;
+    border:1.5px solid var(--line);border-top-color:var(--gold);border-radius:50%;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---------- galería ---------- */
+  .gallery{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    gap:64px 48px;margin-top:30px;
+  }
+  .piece{
+    opacity:0;transform:translateY(24px);
+    animation:rise .9s cubic-bezier(.2,.7,.2,1) forwards;
+    display:flex;flex-direction:column;align-items:center;
+  }
+  @keyframes rise{to{opacity:1;transform:none}}
+
+  /* marco dorado con luz */
+  .frame{
+    position:relative;cursor:pointer;width:100%;
+    padding:14px;border-radius:3px;
+    background:
+      linear-gradient(145deg,var(--frame-2),var(--frame-3) 40%,var(--frame-1) 75%,var(--frame-2));
+    box-shadow:
+      0 2px 0 rgba(255,255,255,.18) inset,
+      0 -2px 0 rgba(0,0,0,.5) inset,
+      0 26px 50px -18px var(--shadow),
+      0 8px 18px -8px rgba(0,0,0,.5);
+    transition:transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s;
+  }
+  .frame::before{
+    content:"";position:absolute;inset:9px;border-radius:1px;
+    border:1px solid rgba(0,0,0,.45);pointer-events:none;z-index:3;
+  }
+  /* halo de foco arriba de la obra */
+  .frame::after{
+    content:"";position:absolute;left:50%;top:-46px;transform:translateX(-50%);
+    width:78%;height:60px;border-radius:50%;
+    background:radial-gradient(ellipse at center,rgba(230,201,138,.22),transparent 70%);
+    filter:blur(8px);opacity:0;transition:opacity .45s;pointer-events:none;
+  }
+  .piece:hover .frame{transform:translateY(-8px)}
+  .piece:hover .frame::after{opacity:1}
+  .canvas-wrap{
+    position:relative;border-radius:1px;overflow:hidden;background:#0c0a08;
+    aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
+  }
+  .canvas-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+  .canvas-wrap .ph{color:var(--ink-faint);font-style:italic;font-size:13px;padding:20px;text-align:center}
+  .seal{
+    position:absolute;top:12px;right:12px;z-index:4;
+    background:rgba(16,13,11,.78);backdrop-filter:blur(3px);
+    border:1px solid var(--line);border-radius:30px;
+    padding:5px 11px;font-size:10.5px;letter-spacing:.08em;color:var(--gold-bright);
+    display:flex;align-items:center;gap:5px;
+  }
+  /* placa de bronce */
+  .plaque{
+    margin-top:20px;text-align:center;max-width:88%;
+  }
+  .plaque .title{
+    font-family:'Fraunces';font-size:21px;font-weight:400;color:var(--ink);line-height:1.2;
+  }
+  .plaque .meta{
+    margin-top:7px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-faint);
+  }
+  .plaque .meta b{color:var(--brass);font-weight:500}
+  .plaque .owner{
+    margin-top:9px;font-size:11.5px;color:var(--ink-faint);font-style:italic;
+  }
+  .plaque .owner span{color:var(--gold);font-style:normal}
+
+  /* ---------- lightbox ---------- */
+  .lightbox{
+    position:fixed;inset:0;z-index:50;display:none;
+    background:rgba(8,6,5,.94);backdrop-filter:blur(6px);
+    padding:40px 24px;overflow:auto;
+  }
+  .lightbox.open{display:flex;align-items:flex-start;justify-content:center;animation:fade .3s}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .lb-inner{
+    max-width:980px;width:100%;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;
+    margin:auto;align-items:start;
+  }
+  .lb-art{
+    padding:16px;border-radius:3px;
+    background:linear-gradient(145deg,var(--frame-2),var(--frame-3) 40%,var(--frame-1) 75%,var(--frame-2));
+    box-shadow:0 40px 80px -24px #000;
+  }
+  .lb-art img{width:100%;display:block;border-radius:1px;background:#0c0a08}
+  .lb-info{padding-top:6px}
+  .lb-info h2{font-family:'Fraunces';font-weight:400;font-size:34px;line-height:1.1}
+  .lb-info .lb-sub{margin-top:6px;color:var(--gold);font-style:italic;font-size:15px}
+  .lb-info p.desc{margin-top:18px;color:var(--ink-soft);line-height:1.65;font-weight:300;font-size:15px}
+  .attrs{margin-top:22px;display:flex;flex-wrap:wrap;gap:9px}
+  .attr{
+    border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:rgba(201,168,106,.05);
+  }
+  .attr .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+  .attr .v{font-size:13px;color:var(--ink);margin-top:2px;word-break:break-all}
+  .lb-links{margin-top:24px;display:flex;flex-direction:column;gap:10px}
+  .lb-links a{
+    color:var(--gold-bright);text-decoration:none;font-size:14px;
+    border-bottom:1px solid var(--line);padding-bottom:8px;transition:color .2s;
+  }
+  .lb-links a:hover{color:var(--ink)}
+  .lb-note{
+    margin-top:22px;font-size:12.5px;color:var(--ink-faint);font-style:italic;line-height:1.5;
+    border-left:2px solid var(--gold);padding-left:14px;
+  }
+  .lb-close{
+    position:fixed;top:24px;right:30px;z-index:51;color:var(--ink-soft);
+    font-size:30px;cursor:pointer;background:none;border:none;line-height:1;transition:color .2s;
+  }
+  .lb-close:hover{color:var(--gold)}
+
+  footer{
+    text-align:center;margin-top:90px;padding-top:34px;border-top:1px solid var(--line);
+    color:var(--ink-faint);font-size:13px;font-style:italic;
+  }
+  footer b{color:var(--gold);font-style:normal;font-weight:500;letter-spacing:.04em}
+
+  @media(max-width:720px){
+    .lb-inner{grid-template-columns:1fr;gap:24px}
+    .gallery{gap:50px 28px}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <header class="hero">
+    <div class="eyebrow">una colección de arte cifrado</div>
+    <h1 id="collTitle">La <em>Galería</em></h1>
+    <p class="sub">Cada pieza es arte generativo único. Y dentro de cada una viaja un mensaje cifrado — invisible a la vista, legible sólo con la clave. Lo que ves es público; lo que guarda, es secreto.</p>
+    <div class="rule"></div>
+    <div class="collection-line">Sepolia · ERC-721 · <b id="collMeta">cargando…</b></div>
+
+    <details class="config">
+      <summary>Configurar colección</summary>
+      <div class="body">
+        <div class="field">
+          <label>Dirección del contrato</label>
+          <input id="cfgContract" spellcheck="false" placeholder="0x…">
+        </div>
+        <div class="config-row">
+          <div class="field"><label>RPC (Sepolia)</label><input id="cfgRpc" spellcheck="false"></div>
+          <button class="btn" id="cfgGo">Cargar galería</button>
+        </div>
+        <div class="field">
+          <label>Gateway IPFS</label>
+          <input id="cfgGateway" spellcheck="false">
+        </div>
+      </div>
+    </details>
+  </header>
+
+  <div class="status" id="status"></div>
+  <div class="gallery" id="gallery"></div>
+
+  <footer>
+    Galería propia · arte servido directo desde <b>IPFS</b> (inmutable, sin alterar) · hecho con <b>CipherVault</b>
+  </footer>
+</div>
+
+<!-- lightbox -->
+<button class="lb-close" id="lbClose" style="display:none" aria-label="cerrar">×</button>
+<div class="lightbox" id="lightbox">
+  <div class="lb-inner">
+    <div class="lb-art"><img id="lbImg" alt=""></div>
+    <div class="lb-info">
+      <h2 id="lbTitle"></h2>
+      <div class="lb-sub" id="lbSub"></div>
+      <p class="desc" id="lbDesc"></p>
+      <div class="attrs" id="lbAttrs"></div>
+      <div class="lb-links" id="lbLinks"></div>
+      <div class="lb-note">Esta imagen contiene un mensaje cifrado (AES-256) embebido por esteganografía. Es indetectable sin la clave: cargá la imagen y tu clave en CipherVault para revelarlo.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — cambiá estos valores (o usá ?contract=…&rpc=…&gateway=…)
+   ============================================================ */
+var CONFIG = {
+  contract: "0x4E9F817c67a83E233399575BF2837e8A6De305f7",
+  rpc:      "https://ethereum-sepolia-rpc.publicnode.com",
+  explorer: "https://sepolia.etherscan.io",
+  gateways: ["https://gateway.pinata.cloud/ipfs/","https://ipfs.io/ipfs/","https://dweb.link/ipfs/"],
+  maxScan:  120   // tope de seguridad por si no hay nextId()
+};
+/* selectores ERC-721 (verificados con keccak-256) */
+var SEL = { tokenURI:"0xc87b56dd", ownerOf:"0x6352211e", name:"0x06fdde03", symbol:"0x95d89b41", nextId:"0x61b8ce8c", totalSupply:"0x18160ddd" };
+
+/* ---- aplicar query params ---- */
+(function(){
+  var q=new URLSearchParams(location.search);
+  ["contract","rpc","gateway"].forEach(function(k){
+    var v=q.get(k); if(v){ if(k==="gateway") CONFIG.gateways.unshift(v.endsWith("/")?v:v+"/"); else CONFIG[k]=v; }
+  });
+})();
+
+/* ---- helpers de codificación/decodificación ABI ---- */
+function pad32(hexNoPrefix){ return hexNoPrefix.padStart(64,"0"); }
+function uintToWord(n){ return pad32(BigInt(n).toString(16)); }
+function decodeString(hex){
+  if(!hex || hex==="0x") return "";
+  var h=hex.slice(2);
+  var off=parseInt(h.slice(0,64),16)*2;
+  var len=parseInt(h.slice(off,off+64),16)*2;
+  var data=h.slice(off+64, off+64+len);
+  var bytes=new Uint8Array(data.length/2);
+  for(var i=0;i<data.length;i+=2) bytes[i/2]=parseInt(data.slice(i,i+2),16);
+  try{ return new TextDecoder().decode(bytes); }catch(e){ return ""; }
+}
+function decodeAddress(hex){ if(!hex||hex==="0x") return ""; var h=hex.slice(2); return "0x"+h.slice(24,64); }
+function decodeUint(hex){ if(!hex||hex==="0x") return null; try{ return Number(BigInt(hex)); }catch(e){ return null; } }
+function shortAddr(a){ if(!a||a.length<10) return a||""; return a.slice(0,6)+"…"+a.slice(-4); }
+
+/* ---- RPC eth_call (solo lectura, sin wallet) ---- */
+var _rpcId=0;
+async function ethCall(data){
+  var body={ jsonrpc:"2.0", id:++_rpcId, method:"eth_call", params:[{ to:CONFIG.contract, data:data }, "latest"] };
+  var r=await fetch(CONFIG.rpc,{ method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) });
+  var j=await r.json();
+  if(j.error) throw new Error(j.error.message||"revert");
+  return j.result;
+}
+
+/* ---- IPFS: ipfs:// -> URL de gateway (con fallbacks) ---- */
+function ipfsToHttp(uri, gwIndex){
+  gwIndex=gwIndex||0;
+  var gw=CONFIG.gateways[gwIndex]||CONFIG.gateways[0];
+  if(!uri) return "";
+  if(uri.indexOf("ipfs://")===0){ return gw + uri.replace("ipfs://","").replace(/^ipfs\//,""); }
+  if(uri.indexOf("http")===0) return uri;
+  return gw + uri; // CID pelado
+}
+async function fetchJsonIPFS(uri){
+  for(var i=0;i<CONFIG.gateways.length;i++){
+    try{
+      var url=ipfsToHttp(uri,i);
+      var r=await fetch(url,{cache:"no-store"});
+      if(r.ok) return await r.json();
+    }catch(e){}
+  }
+  throw new Error("metadata no accesible por IPFS");
+}
+
+/* ---- estado UI ---- */
+var $=function(id){return document.getElementById(id);};
+function setStatus(txt, spin){
+  var el=$("status");
+  el.innerHTML = txt ? ((spin?'<span class="spinner"></span>':'')+txt) : "";
+}
+
+/* ---- render de una pieza ---- */
+function renderPiece(idx, id, meta, owner){
+  var imgUrl = meta && meta.image ? ipfsToHttp(meta.image,0) : "";
+  var title = (meta && meta.name) ? meta.name : ("Pieza #"+id);
+  var div=document.createElement("div");
+  div.className="piece";
+  div.style.animationDelay=(Math.min(idx,12)*0.07)+"s";
+  div.innerHTML=
+    '<div class="frame">'+
+      '<div class="canvas-wrap">'+
+        '<div class="seal">🔒 cifrado</div>'+
+        (imgUrl? '<img alt="" loading="lazy" src="'+imgUrl+'">' : '<div class="ph">imagen en IPFS…</div>')+
+      '</div>'+
+    '</div>'+
+    '<div class="plaque">'+
+      '<div class="title">'+escapeHtml(title)+'</div>'+
+      '<div class="meta">Token <b>#'+id+'</b> · ERC-721</div>'+
+      (owner?'<div class="owner">colección de <span>'+shortAddr(owner)+'</span></div>':'')+
+    '</div>';
+  // fallback de gateway para la imagen
+  var imgEl=div.querySelector("img");
+  if(imgEl && meta && meta.image){
+    var tries=0;
+    imgEl.onerror=function(){
+      tries++;
+      if(tries<CONFIG.gateways.length){ imgEl.src=ipfsToHttp(meta.image,tries); }
+      else { imgEl.replaceWith(Object.assign(document.createElement("div"),{className:"ph",textContent:"imagen no disponible"})); }
+    };
+  }
+  div.querySelector(".frame").addEventListener("click", function(){ openLightbox(id, meta, owner, imgEl?imgEl.src:imgUrl); });
+  $("gallery").appendChild(div);
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+
+/* ---- lightbox ---- */
+function openLightbox(id, meta, owner, imgSrc){
+  $("lbImg").src=imgSrc||"";
+  $("lbTitle").textContent=(meta&&meta.name)?meta.name:("Pieza #"+id);
+  $("lbSub").textContent="Token #"+id+" · Sepolia · ERC-721";
+  $("lbDesc").textContent=(meta&&meta.description)?meta.description:"";
+  var attrs=$("lbAttrs"); attrs.innerHTML="";
+  if(meta && Array.isArray(meta.attributes)){
+    meta.attributes.forEach(function(a){
+      var d=document.createElement("div"); d.className="attr";
+      d.innerHTML='<div class="k">'+escapeHtml(a.trait_type||"")+'</div><div class="v">'+escapeHtml(String(a.value!=null?a.value:""))+'</div>';
+      attrs.appendChild(d);
+    });
+  }
+  var links=$("lbLinks"); links.innerHTML="";
+  function addLink(label,href){ if(!href) return; var a=document.createElement("a"); a.href=href; a.target="_blank"; a.rel="noopener"; a.textContent=label; links.appendChild(a); }
+  addLink("Ver en Etherscan ↗", CONFIG.explorer+"/nft/"+CONFIG.contract+"/"+id);
+  if(imgSrc) addLink("Ver imagen en IPFS ↗", imgSrc);
+  if(owner) addLink("Propietario: "+shortAddr(owner)+" ↗", CONFIG.explorer+"/address/"+owner);
+  $("lightbox").classList.add("open");
+  $("lbClose").style.display="block";
+  document.body.style.overflow="hidden";
+}
+function closeLightbox(){ $("lightbox").classList.remove("open"); $("lbClose").style.display="none"; document.body.style.overflow=""; }
+$("lbClose").addEventListener("click", closeLightbox);
+$("lightbox").addEventListener("click", function(e){ if(e.target===this) closeLightbox(); });
+document.addEventListener("keydown", function(e){ if(e.key==="Escape") closeLightbox(); });
+
+/* ---- carga principal: barre la colección en orden ---- */
+async function loadGallery(){
+  $("gallery").innerHTML="";
+  setStatus("Conectando con la cadena…", true);
+  // nombre de la colección
+  try{
+    var nm=decodeString(await ethCall(SEL.name));
+    if(nm){ $("collTitle").innerHTML=escapeHtml(nm.split(" ")[0])+' <em>'+escapeHtml(nm.split(" ").slice(1).join(" ")||"Galería")+'</em>'; }
+  }catch(e){}
+  // cantidad: probar nextId() -> totalSupply() -> barrido
+  var count=null;
+  try{ count=decodeUint(await ethCall(SEL.nextId)); }catch(e){}
+  if(count==null){ try{ count=decodeUint(await ethCall(SEL.totalSupply)); }catch(e){} }
+  var limit = (count!=null && count>0) ? Math.min(count, CONFIG.maxScan) : CONFIG.maxScan;
+  $("collMeta").textContent = (count!=null? count : "—")+" pieza(s)";
+
+  var shown=0;
+  for(var id=0; id<limit; id++){
+    setStatus("Colgando las obras… ("+(shown)+(count!=null?(" de "+count):"")+")", true);
+    var owner=null, uri="";
+    try{ owner=decodeAddress(await ethCall(SEL.ownerOf + uintToWord(id))); }
+    catch(e){ if(count==null){ break; } else { continue; } } // si no hay nextId y revierte, terminamos
+    try{ uri=decodeString(await ethCall(SEL.tokenURI + uintToWord(id))); }catch(e){}
+    var meta=null;
+    if(uri){ try{ meta=await fetchJsonIPFS(uri); }catch(e){ meta={ name:"Pieza #"+id, description:"(metadata no accesible ahora mismo)" }; } }
+    renderPiece(shown, id, meta, owner);
+    shown++;
+  }
+  if(shown===0){ setStatus("No se encontraron piezas en este contrato todavía."); }
+  else { setStatus(""); $("collMeta").textContent = shown+" pieza"+(shown!==1?"s":""); }
+}
+
+/* ---- wiring config ---- */
+$("cfgContract").value=CONFIG.contract;
+$("cfgRpc").value=CONFIG.rpc;
+$("cfgGateway").value=CONFIG.gateways[0];
+$("cfgGo").addEventListener("click", function(){
+  CONFIG.contract=$("cfgContract").value.trim()||CONFIG.contract;
+  CONFIG.rpc=$("cfgRpc").value.trim()||CONFIG.rpc;
+  var gw=$("cfgGateway").value.trim(); if(gw){ if(!gw.endsWith("/")) gw+="/"; CONFIG.gateways=[gw].concat(CONFIG.gateways.filter(function(g){return g!==gw;})); }
+  loadGallery();
+});
+
+loadGallery();
+</script>
+</body>
+</html>
