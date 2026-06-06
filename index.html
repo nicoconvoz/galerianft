@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CipherVault · Galería</title>
-<meta name="description" content="Galería de arte cifrado — cada pieza guarda un mensaje invisible, legible sólo con la clave.">
+<title>Galería</title>
+<meta name="description" content="Una colección de arte generativo.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Spectral:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
@@ -249,9 +249,9 @@
 <div class="stage">
 
   <header class="hero">
-    <div class="eyebrow">una colección de arte cifrado</div>
+    <div class="eyebrow">una colección de arte generativo</div>
     <h1 id="collTitle">La <em>Galería</em></h1>
-    <p class="sub">Cada pieza es arte generativo único. Y dentro de cada una viaja un mensaje cifrado — invisible a la vista, legible sólo con la clave. Lo que ves es público; lo que guarda, es secreto.</p>
+    <p class="sub">Piezas únicas de arte generativo, cada una irrepetible. Una colección personal, en cadena.</p>
     <div class="rule"></div>
     <div class="collection-line">Sepolia · ERC-721 · <b id="collMeta">cargando…</b></div>
 
@@ -278,7 +278,7 @@
   <div class="gallery" id="gallery"></div>
 
   <footer>
-    Galería propia · arte servido directo desde <b>IPFS</b> (inmutable, sin alterar) · hecho con <b>CipherVault</b>
+    Galería personal · arte servido directo desde <b>IPFS</b>
   </footer>
 </div>
 
@@ -293,7 +293,6 @@
       <p class="desc" id="lbDesc"></p>
       <div class="attrs" id="lbAttrs"></div>
       <div class="lb-links" id="lbLinks"></div>
-      <div class="lb-note">Esta imagen contiene un mensaje cifrado (AES-256) embebido por esteganografía. Es indetectable sin la clave: cargá la imagen y tu clave en CipherVault para revelarlo.</div>
     </div>
   </div>
 </div>
@@ -307,6 +306,8 @@ var CONFIG = {
   rpc:      "https://ethereum-sepolia-rpc.publicnode.com",
   explorer: "https://sepolia.etherscan.io",
   gateways: ["https://gateway.pinata.cloud/ipfs/","https://ipfs.io/ipfs/","https://dweb.link/ipfs/"],
+  startId:  0,    // primer token a mostrar
+  hideIds:  [0],  // tokens a OCULTAR siempre (ej: el del JSON viejo). Sacá/agregá IDs acá.
   maxScan:  120   // tope de seguridad por si no hay nextId()
 };
 /* selectores ERC-721 (verificados con keccak-256) */
@@ -384,7 +385,6 @@ function renderPiece(idx, id, meta, owner){
   div.innerHTML=
     '<div class="frame">'+
       '<div class="canvas-wrap">'+
-        '<div class="seal">🔒 cifrado</div>'+
         (imgUrl? '<img alt="" loading="lazy" src="'+imgUrl+'">' : '<div class="ph">imagen en IPFS…</div>')+
       '</div>'+
     '</div>'+
@@ -453,14 +453,16 @@ async function loadGallery(){
   $("collMeta").textContent = (count!=null? count : "—")+" pieza(s)";
 
   var shown=0;
-  for(var id=0; id<limit; id++){
+  for(var id=(CONFIG.startId||0); id<limit; id++){
+    if((CONFIG.hideIds||[]).indexOf(id)>=0) continue;   // token ocultado a propósito (ej: JSON viejo)
     setStatus("Colgando las obras… ("+(shown)+(count!=null?(" de "+count):"")+")", true);
     var owner=null, uri="";
     try{ owner=decodeAddress(await ethCall(SEL.ownerOf + uintToWord(id))); }
     catch(e){ if(count==null){ break; } else { continue; } } // si no hay nextId y revierte, terminamos
     try{ uri=decodeString(await ethCall(SEL.tokenURI + uintToWord(id))); }catch(e){}
     var meta=null;
-    if(uri){ try{ meta=await fetchJsonIPFS(uri); }catch(e){ meta={ name:"Pieza #"+id, description:"(metadata no accesible ahora mismo)" }; } }
+    if(uri){ try{ meta=await fetchJsonIPFS(uri); }catch(e){ meta=null; } }
+    if(!meta || !meta.image){ continue; }   // token sin imagen accesible (p.ej. despineado) -> no se cuelga
     renderPiece(shown, id, meta, owner);
     shown++;
   }
