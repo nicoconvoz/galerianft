@@ -250,7 +250,7 @@
 
   <header class="hero">
     <div class="eyebrow">una colección de arte generativo</div>
-    <h1 id="collTitle">La <em>Galería</em></h1>
+    <h1 id="collTitle">Galería de <em>Arte NFT</em></h1>
     <p class="sub">Piezas únicas de arte generativo, cada una irrepetible. Una colección personal, en cadena.</p>
     <div class="rule"></div>
     <div class="collection-line">Sepolia · ERC-721 · <b id="collMeta">cargando…</b></div>
@@ -378,7 +378,8 @@ function setStatus(txt, spin){
 /* ---- render de una pieza ---- */
 function renderPiece(idx, id, meta, owner){
   var imgUrl = meta && meta.image ? ipfsToHttp(meta.image,0) : "";
-  var title = (meta && meta.name) ? meta.name : ("Pieza #"+id);
+  var num = idx+1;  // número visible secuencial (ignora tokens ocultos como el 0)
+  var title = (meta && meta.name) ? meta.name : ("Pieza Nº "+num);
   var div=document.createElement("div");
   div.className="piece";
   div.style.animationDelay=(Math.min(idx,12)*0.07)+"s";
@@ -390,7 +391,7 @@ function renderPiece(idx, id, meta, owner){
     '</div>'+
     '<div class="plaque">'+
       '<div class="title">'+escapeHtml(title)+'</div>'+
-      '<div class="meta">Token <b>#'+id+'</b> · ERC-721</div>'+
+      '<div class="meta">Pieza <b>Nº '+num+'</b> · ERC-721</div>'+
       (owner?'<div class="owner">colección de <span>'+shortAddr(owner)+'</span></div>':'')+
     '</div>';
   // fallback de gateway para la imagen
@@ -403,16 +404,16 @@ function renderPiece(idx, id, meta, owner){
       else { imgEl.replaceWith(Object.assign(document.createElement("div"),{className:"ph",textContent:"imagen no disponible"})); }
     };
   }
-  div.querySelector(".frame").addEventListener("click", function(){ openLightbox(id, meta, owner, imgEl?imgEl.src:imgUrl); });
+  div.querySelector(".frame").addEventListener("click", function(){ openLightbox(num, id, meta, owner, imgEl?imgEl.src:imgUrl); });
   $("gallery").appendChild(div);
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
 
 /* ---- lightbox ---- */
-function openLightbox(id, meta, owner, imgSrc){
+function openLightbox(num, id, meta, owner, imgSrc){
   $("lbImg").src=imgSrc||"";
-  $("lbTitle").textContent=(meta&&meta.name)?meta.name:("Pieza #"+id);
-  $("lbSub").textContent="Token #"+id+" · Sepolia · ERC-721";
+  $("lbTitle").textContent=(meta&&meta.name)?meta.name:("Pieza Nº "+num);
+  $("lbSub").textContent="Pieza Nº "+num+" · Sepolia · ERC-721";
   $("lbDesc").textContent=(meta&&meta.description)?meta.description:"";
   var attrs=$("lbAttrs"); attrs.innerHTML="";
   if(meta && Array.isArray(meta.attributes)){
@@ -442,8 +443,7 @@ async function loadGallery(){
   setStatus("Conectando con la cadena…", true);
   // nombre de la colección
   try{
-    var nm=decodeString(await ethCall(SEL.name));
-    if(nm){ $("collTitle").innerHTML=escapeHtml(nm.split(" ")[0])+' <em>'+escapeHtml(nm.split(" ").slice(1).join(" ")||"Galería")+'</em>'; }
+  // (el título queda fijo: "Galería de Arte NFT" — no se toma el name() del contrato)
   }catch(e){}
   // cantidad: probar nextId() -> totalSupply() -> barrido
   var count=null;
