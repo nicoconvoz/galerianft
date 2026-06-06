@@ -450,12 +450,12 @@ async function loadGallery(){
   try{ count=decodeUint(await ethCall(SEL.nextId)); }catch(e){}
   if(count==null){ try{ count=decodeUint(await ethCall(SEL.totalSupply)); }catch(e){} }
   var limit = (count!=null && count>0) ? Math.min(count, CONFIG.maxScan) : CONFIG.maxScan;
-  $("collMeta").textContent = (count!=null? count : "—")+" pieza(s)";
+  $("collMeta").textContent = "cargando…";
 
   var shown=0;
   for(var id=(CONFIG.startId||0); id<limit; id++){
     if((CONFIG.hideIds||[]).indexOf(id)>=0) continue;   // token ocultado a propósito (ej: JSON viejo)
-    setStatus("Colgando las obras… ("+(shown)+(count!=null?(" de "+count):"")+")", true);
+    setStatus("Colgando las obras…", true);
     var owner=null, uri="";
     try{ owner=decodeAddress(await ethCall(SEL.ownerOf + uintToWord(id))); }
     catch(e){ if(count==null){ break; } else { continue; } } // si no hay nextId y revierte, terminamos
@@ -466,8 +466,10 @@ async function loadGallery(){
     renderPiece(shown, id, meta, owner);
     shown++;
   }
+  // el contador SIEMPRE refleja las piezas realmente mostradas (no las ocultas)
+  $("collMeta").textContent = shown+" pieza"+(shown!==1?"s":"");
   if(shown===0){ setStatus("No se encontraron piezas en este contrato todavía."); }
-  else { setStatus(""); $("collMeta").textContent = shown+" pieza"+(shown!==1?"s":""); }
+  else { setStatus(""); }
 }
 
 /* ---- wiring config ---- */
